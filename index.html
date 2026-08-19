@@ -1,496 +1,272 @@
-<!DOCTYPE html>
+          <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>เกมเคมี เมิงปาย</title>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #38bdf8;
-            --text-main: #f8fafc;
-            --danger: #ef4444;
-            --success: #22c55e;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เกมเคมีตารางธาตุ - Periodic Table Master</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --accent: #10b981;
+      --danger: #ef4444;
+    }
 
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-            font-family: 'Sukhumvit Set', 'Kanit', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif, system-ui; }
+    body { background-color: var(--bg); color: var(--text); padding: 15px; text-align: center; min-height: 100vh; }
+    
+    header { margin-bottom: 15px; }
+    .hearts { font-size: 1.5rem; color: var(--danger); margin: 10px 0; }
+    
+    .nav-modes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+    .btn { background: var(--primary); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+    .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+    .btn.active { background: var(--accent); font-weight: bold; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 10px;
-        }
+    .game-card { background: var(--card-bg); border-radius: 12px; padding: 20px; max-width: 900px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
 
-        /* Top Bar & Hearts */
-        header {
-            width: 100%;
-            max-width: 1000px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 20px;
-            background: var(--card-bg);
-            border-radius: 12px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
+    /* Mode 1: Table Grid */
+    .table-container { overflow-x: auto; padding-bottom: 10px; }
+    .periodic-table { display: grid; grid-template-columns: repeat(18, minmax(35px, 1fr)); gap: 4px; min-width: 680px; margin: 15px 0; }
+    .slot { border: 1px dashed #475569; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.02); }
+    .slot.filled { border-style: solid; background: var(--primary); font-weight: bold; }
+    .drag-deck { display: flex; gap: 10px; justify-content: center; min-height: 50px; margin-top: 15px; flex-wrap: wrap; }
+    .drag-item { background: var(--accent); color: white; padding: 8px 16px; border-radius: 6px; cursor: grab; font-weight: bold; user-select: none; }
+    .drag-item.selected { outline: 3px solid #f59e0b; }
 
-        .hearts {
-            font-size: 1.5rem;
-            letter-spacing: 4px;
-        }
+    /* Comparison & Question Modes */
+    .compare-box { display: flex; gap: 15px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+    .element-card { background: #334155; padding: 25px; border-radius: 10px; width: 140px; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
+    .element-card:hover { border-color: var(--accent); transform: scale(1.05); }
+    .symbol { font-size: 2rem; font-weight: bold; color: #38bdf8; }
 
-        .score-board {
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        /* Mode Selector */
-        .mode-nav {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            width: 100%;
-            max-width: 1000px;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .mode-btn {
-            background: var(--card-bg);
-            color: var(--text-main);
-            border: 1px solid #334155;
-            padding: 8px 14px;
-            border-radius: 20px;
-            white-space: nowrap;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-
-        .mode-btn.active {
-            background: var(--accent);
-            color: #0f172a;
-            font-weight: bold;
-        }
-
-        /* Main Game Area */
-        main {
-            width: 100%;
-            max-width: 1000px;
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 450px;
-            position: relative;
-        }
-
-        .question-title {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        /* Grid / Layout for Options */
-        .option-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 12px;
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .opt-card {
-            background: #334155;
-            border: 2px solid #475569;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.1s, background 0.2s;
-        }
-
-        .opt-card:active {
-            transform: scale(0.96);
-        }
-
-        .opt-symbol {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        .opt-name {
-            font-size: 0.85rem;
-            opacity: 0.8;
-            margin-top: 4px;
-        }
-
-        /* Periodic Table Grid (Mode 1) */
-        .ptable-container {
-            width: 100%;
-            overflow-x: auto;
-            padding: 10px 0;
-        }
-
-        .ptable-grid {
-            display: grid;
-            grid-template-columns: repeat(18, minmax(32px, 1fr));
-            gap: 3px;
-            min-width: 650px;
-        }
-
-        .ptable-cell {
-            aspect-ratio: 1;
-            border: 1px dashed #475569;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-
-        .ptable-cell.filled {
-            background: var(--accent);
-            color: #0f172a;
-            border-style: solid;
-        }
-
-        .ptable-cell.selected-target {
-            border: 2px solid var(--accent);
-            background: rgba(56, 189, 248, 0.2);
-        }
-
-        .draggable-bank {
-            display: flex;
-            gap: 8px;
-            margin-top: 15px;
-            overflow-x: auto;
-            width: 100%;
-            padding: 8px;
-            background: #0f172a;
-            border-radius: 8px;
-        }
-
-        /* Inputs & Text Answers */
-        input[type="text"] {
-            width: 100%;
-            max-width: 350px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid #475569;
-            background: #0f172a;
-            color: #fff;
-            font-size: 1rem;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .submit-btn {
-            background: var(--accent);
-            color: #0f172a;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-
-        /* Overlay Game Over / Victory */
-        .overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.95);
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-
-        .hidden { display: none !important; }
-    </style>
+    input[type="text"] { padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; margin-right: 8px; width: 60%; max-width: 300px; }
+    
+    .msg { margin-top: 15px; font-weight: bold; min-height: 24px; }
+  </style>
 </head>
 <body>
 
-    <header>
-        <div class="hearts" id="hearts-display">❤️❤️❤️❤️❤️</div>
-        <div class="score-board">คะแนน: <span id="score-val">0</span></div>
-    </header>
+  <header>
+    <h1>🧪 Periodic Table Master</h1>
+    <div class="hearts" id="hearts">❤️❤️❤️❤️❤️</div>
+  </header>
 
-    <div class="mode-nav">
-        <button class="mode-btn active" onclick="switchMode(1)">1. ลากตารางธาตุ</button>
-        <button class="mode-btn" onclick="switchMode(2)">2. จัดเรียง e⁻</button>
-        <button class="mode-btn" onclick="switchMode(3)">3. คำใบ้ทายธาตุ</button>
-        <button class="mode-btn" onclick="switchMode(4)">4. เปรียบเทียบ IE</button>
-        <button class="mode-btn" onclick="switchMode(5)">5. เปรียบเทียบ EN</button>
-        <button class="mode-btn" onclick="switchMode(6)">6. จุดหลอมเหลว</button>
-        <button class="mode-btn" onclick="switchMode(7)">7. สัมพรรคภาพ (EA)</button>
-    </div>
+  <div class="nav-modes">
+    <button class="btn active" onclick="switchMode(1)">1. จัดวางตารางธาตุ</button>
+    <button class="btn" onclick="switchMode(2)">2. จัดเรียง e⁻</button>
+    <button class="btn" onclick="switchMode(3)">3. คำใบ้ธาตุ</button>
+    <button class="btn" onclick="switchMode(4)">4. เปรียบเทียบ IE</button>
+    <button class="btn" onclick="switchMode(5)">5. เปรียบเทียบ EN</button>
+    <button class="btn" onclick="switchMode(6)">6. จุดหลอมเหลว</button>
+    <button class="btn" onclick="switchMode(7)">7. เปรียบเทียบ EA</button>
+  </div>
 
-    <main id="game-container">
-        <!-- Game screens render dynamically -->
-    </main>
+  <div class="game-card" id="game-area">
+    <!-- Game Content Injected via JS -->
+  </div>
 
-    <script>
-        // --- DATA DATASET (118 Elements Sample Framework) ---
-        const elementsData = [
-            { num: 1, symbol: "H", name: "Hydrogen", group: 1, period: 1, ie: 1312, en: 2.20, mp: 13.99, ea: 73, e_config: "1s1", hint: "ธาตุที่มีเบาที่สุดในจักรวาล เป็นส่วนประกอบของน้ำ" },
-            { num: 2, symbol: "He", name: "Helium", group: 18, period: 1, ie: 2372, en: 0, mp: 0.95, ea: 0, e_config: "1s2", hint: "แก๊สเฉื่อยใช้บรรจุลูกโป่งสวรรค์" },
-            { num: 3, symbol: "Li", name: "Lithium", group: 1, period: 2, ie: 520, en: 0.98, mp: 453.65, ea: 60, e_config: "2, 1", hint: "โลหะเบาที่สุด ใช้ทำแบตเตอรี่โทรศัพท์" },
-            { num: 4, symbol: "Be", name: "Beryllium", group: 2, period: 2, ie: 899, en: 1.57, mp: 1560, ea: 0, e_config: "2, 2", hint: "ธาตุหมู่อัลคาไลน์เอิร์ทอยู่ในคาบที่ 2" },
-            { num: 5, symbol: "B", name: "Boron", group: 13, period: 2, ie: 801, en: 2.04, mp: 2349, ea: 27, e_config: "2, 3", hint: "กึ่งโลหะหมู่ 13 ใช้ทำแก้วทนความร้อน" },
-            { num: 6, symbol: "C", name: "Carbon", group: 14, period: 2, ie: 1086, en: 2.55, mp: 3823, ea: 122, e_config: "2, 4", hint: "ธาตุหลักของสิ่งมีชีวิต รูปผลึกคือเพชรและแกรไฟต์" },
-            { num: 7, symbol: "N", name: "Nitrogen", group: 15, period: 2, ie: 1402, en: 3.04, mp: 63.15, ea: 7, e_config: "2, 5", hint: "แก๊สที่มีปริมาณมากที่สุดในบรรยากาศโลก (~78%)" },
-            { num: 8, symbol: "O", name: "Oxygen", group: 16, period: 2, ie: 1314, en: 3.44, mp: 54.36, ea: 141, e_config: "2, 6", hint: "แก๊สที่จำเป็นต่อการหายใจของสิ่งมีชีวิต" },
-            { num: 9, symbol: "F", name: "Fluorine", group: 17, period: 2, ie: 1681, en: 3.98, mp: 53.48, ea: 328, e_config: "2, 7", hint: "ธาตุที่มีค่า Electronegativity (EN) สูงที่สุด" },
-            { num: 10, symbol: "Ne", name: "Neon", group: 18, period: 2, ie: 2080, en: 0, mp: 24.56, ea: 0, e_config: "2, 8", hint: "แก๊สเฉื่อยเรืองแสงสีส้มแดงในป้ายไฟเปล่งแสง" },
-            { num: 11, symbol: "Na", name: "Sodium", group: 1, period: 3, ie: 496, en: 0.93, mp: 370.87, ea: 53, e_config: "2, 8, 1", hint: "โลหะอัลคาไล ส่วนประกอบสำคัญของเกลือแกง (NaCl)" },
-            { num: 12, symbol: "Mg", name: "Magnesium", group: 2, period: 3, ie: 738, en: 1.31, mp: 923, ea: 0, e_config: "2, 8, 2", hint: "โลหะติดไฟให้แสงสีขาวสว่างจ้า อยู่ในคลอโรฟิลล์" },
-            { num: 17, symbol: "Cl", name: "Chlorine", group: 17, period: 3, ie: 1251, en: 3.16, mp: 171.6, ea: 349, e_config: "2, 8, 7", hint: "แฮโลเจนใช้ฆ่าเชื้อโรคในสระว่ายน้ำ" },
-            { num: 18, symbol: "Ar", name: "Argon", group: 18, period: 3, ie: 1520, en: 0, mp: 83.80, ea: 0, e_config: "2, 8, 8", hint: "แก๊สเฉื่อยบรรจุในหลอดไส้เพื่อป้องกันไส้หลอดไหม้" },
-            { num: 19, symbol: "K", name: "Potassium", group: 1, period: 4, ie: 419, en: 0.82, mp: 336.53, ea: 48, e_config: "2, 8, 8, 1", hint: "ธาตุอาหารหลักของพืช พบได้มากในกล้วย" },
-            { num: 20, symbol: "Ca", name: "Calcium", group: 2, period: 4, ie: 590, en: 1.00, mp: 1115, ea: 2, e_config: "2, 8, 8, 2", hint: "ธาตุสำคัญในกระดูกและฟัน" },
-            { num: 26, symbol: "Fe", name: "Iron", group: 8, period: 4, ie: 762, en: 1.83, mp: 1811, ea: 15, e_config: "2, 8, 14, 2", hint: "โลหะแทรนซิชันที่เป็นส่วนประกอบหลักของเหล็กกล้าและเฮโมโกลบิน" },
-            { num: 29, symbol: "Cu", name: "Copper", group: 11, period: 4, ie: 745, en: 1.90, mp: 1357.77, ea: 118, e_config: "2, 8, 18, 1", hint: "โลหะสีส้มแดง นำไฟฟ้าได้ดีมาก ใช้ทำสายไฟ" },
-            { num: 79, symbol: "Au", name: "Gold", group: 11, period: 6, ie: 890, en: 2.54, mp: 1337.33, ea: 223, e_config: "2, 8, 18, 32, 18, 1", hint: "โลหะมีค่าสีเหลืองทอง ไม่หมองไม่เป็นสนิม" }
-            // *หมายเหตุ: สามารถเพิ่มธาตุจนครบ 118 ธาตุตามโครงสร้าง JSON นี้ได้เลย*
-        ];
+  <script>
+    // Database ธาตุตัวอย่างสำหรับระบบเกม (ขยายข้อมูลได้ตามต้องการ)
+    const elementsData = [
+      { z: 1, sym: "H", name: "Hydrogen", e: "1", ie: 1312, en: 2.20, mp: 14.01, ea: 73 },
+      { z: 2, sym: "He", name: "Helium", e: "2", ie: 2372, en: 0, mp: 0.95, ea: 0 },
+      { z: 3, sym: "Li", name: "Lithium", e: "2,1", ie: 520, en: 0.98, mp: 453.65, ea: 60 },
+      { z: 4, sym: "Be", name: "Beryllium", e: "2,2", ie: 899, en: 1.57, mp: 1560, ea: 0 },
+      { z: 5, sym: "B", name: "Boron", e: "2,3", ie: 801, en: 2.04, mp: 2349, ea: 27 },
+      { z: 6, sym: "C", name: "Carbon", e: "2,4", ie: 1086, en: 2.55, mp: 3823, ea: 122 },
+      { z: 7, sym: "N", name: "Nitrogen", e: "2,5", ie: 1402, en: 3.04, mp: 63.15, ea: 7 },
+      { z: 8, sym: "O", name: "Oxygen", e: "2,6", ie: 1314, en: 3.44, mp: 54.36, ea: 141 },
+      { z: 9, sym: "F", name: "Fluorine", e: "2,7", ie: 1681, en: 3.98, mp: 53.53, ea: 328 },
+      { z: 10, sym: "Ne", name: "Neon", e: "2,8", ie: 2080, en: 0, mp: 24.56, ea: 0 },
+      { z: 11, sym: "Na", name: "Sodium", e: "2,8,1", ie: 496, en: 0.93, mp: 370.87, ea: 53 },
+      { z: 12, sym: "Mg", name: "Magnesium", e: "2,8,2", ie: 738, en: 1.31, mp: 923, ea: 0 },
+      { z: 17, sym: "Cl", name: "Chlorine", e: "2,8,7", ie: 1251, en: 3.16, mp: 171.6, ea: 349 },
+      { z: 18, sym: "Ar", name: "Argon", e: "2,8,8", ie: 1520, en: 0, mp: 83.80, ea: 0 },
+      { z: 19, sym: "K", name: "Potassium", e: "2,8,8,1", ie: 419, en: 0.82, mp: 336.53, ea: 48 },
+      { z: 35, sym: "Br", name: "Bromine", e: "2,8,18,7", ie: 1140, en: 2.96, mp: 265.8, ea: 325 }
+    ];
 
-        // --- GAME STATE ---
-        let currentMode = 1;
-        let hearts = 5;
-        let score = 0;
-        let selectedElemForPlace = null;
+    let currentMode = 1;
+    let hearts = 5;
+    let selectedElement = null; // สำหรับ Tap-to-place บนมือถือ
 
-        // --- CORE FUNCTIONS ---
-        function updateUI() {
-            document.getElementById('hearts-display').innerText = '❤️'.repeat(hearts) + '🖤'.repeat(5 - hearts);
-            document.getElementById('score-val').innerText = score;
-        }
+    function updateHearts() {
+      const container = document.getElementById('hearts');
+      container.innerHTML = '❤️'.repeat(hearts) + '🖤'.repeat(5 - hearts);
+      if (hearts <= 0) {
+        alert("Game Over! หัวใจหมดแล้ว ระบบจะรีเซ็ตเกมใหม่");
+        hearts = 5;
+        updateHearts();
+        switchMode(currentMode);
+      }
+    }
 
-        function handleWrongAnswer() {
-            hearts--;
-            updateUI();
-            if (hearts <= 0) {
-                renderGameOver();
-            } else {
-                alert("คำตอบไม่ถูกต้อง! เสียหัวใจ 1 ดวง");
-            }
-        }
+    function wrongAnswer(msg = "ตอบผิด! หักหัวใจ 1 ดวง") {
+      hearts--;
+      updateHearts();
+      showMsg(msg, 'var(--danger)');
+    }
 
-        function handleCorrectAnswer() {
-            score += 10;
-            updateUI();
-            alert("ถูกต้อง! +10 คะแนน");
-            renderGame();
-        }
+    function showMsg(text, color = 'var(--accent)') {
+      const msgDiv = document.getElementById('msg');
+      if(msgDiv) {
+        msgDiv.innerText = text;
+        msgDiv.style.color = color;
+      }
+    }
 
-        function switchMode(modeNum) {
-            currentMode = modeNum;
-            document.querySelectorAll('.mode-btn').forEach((btn, idx) => {
-                btn.classList.toggle('active', idx + 1 === modeNum);
-            });
-            renderGame();
-        }
+    function switchMode(mode) {
+      currentMode = mode;
+      selectedElement = null;
+      document.querySelectorAll('.nav-modes .btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx + 1 === mode);
+      });
+      renderGame();
+    }
 
-        function renderGame() {
-            const container = document.getElementById('game-container');
-            container.innerHTML = '';
+    function getRandomElements(count = 2) {
+      let shuffled = [...elementsData].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count);
+    }
 
-            if (hearts <= 0) {
-                renderGameOver();
-                return;
-            }
+    function renderGame() {
+      const area = document.getElementById('game-area');
+      
+      if (currentMode === 1) {
+        // Mode 1: Drag & Drop / Tap to Place
+        let deck = getRandomElements(Math.min(5, elementsData.length));
+        area.innerHTML = `
+          <h2>โหมดที่ 1: จัดวางธาตุลงในตาราง (รองรับการแตะเลือกบนมือถือ)</h2>
+          <p>เลือก/ลากธาตุจากด้านล่างไปใส่ตำแหน่ง เลขอะตอม (Z) ที่ถูกต้อง</p>
+          <div class="table-container">
+            <div class="periodic-table">
+              ${Array.from({length: 18}, (_, i) => {
+                let z = i + 1;
+                return `<div class="slot" data-z="${z}" onclick="placeSlot(${z})">Z:${z}</div>`;
+              }).join('')}
+            </div>
+          </div>
+          <div class="drag-deck" id="deck">
+            ${deck.map(el => `
+              <div class="drag-item" draggable="true" ondragstart="drag(event, ${el.z})" onclick="selectCard(this, ${el.z})">
+                ${el.sym} (${el.z})
+              </div>
+            `).join('')}
+          </div>
+          <div class="msg" id="msg"></div>
+        `;
+      } 
+      else if (currentMode === 2) {
+        // Mode 2: Electron Configuration
+        let target = getRandomElements(1)[0];
+        area.innerHTML = `
+          <h2>โหมดที่ 2: จัดเรียงพลังงานอิเล็กตรอนหลัก</h2>
+          <p>ธาตุ: <strong class="symbol">${target.sym}</strong> (เลขอะตอม ${target.z})</p>
+          <p style="margin:10px 0;">ให้พิมพ์การจัดเรียง e⁻ เช่น: 2,8,1</p>
+          <input type="text" id="eInput" placeholder="เช่น 2,8,1">
+          <button class="btn" onclick="checkE('${target.e}')">ส่งคำตอบ</button>
+          <div class="msg" id="msg"></div>
+        `;
+      } 
+      else if (currentMode === 3) {
+        // Mode 3: Clue Guessing
+        let target = getRandomElements(1)[0];
+        area.innerHTML = `
+          <h2>โหมดที่ 3: ถอดรหัสคำใบ้ธาตุ</h2>
+          <p style="margin:15px 0; font-style:italic;">คำใบ้: "ธาตุที่มีเลขอะตอมเท่ากับ ${target.z} และมีสัญลักษณ์คือ '${target.sym}'"</p>
+          <input type="text" id="nameInput" placeholder="พิมพ์ชื่อภาษาอังกฤษ เช่น Hydrogen">
+          <button class="btn" onclick="checkName('${target.name}')">ส่งคำตอบ</button>
+          <div class="msg" id="msg"></div>
+        `;
+      }
+      else if ([4, 5, 6, 7].includes(currentMode)) {
+        // Modes 4-7: Property Comparison
+        let pair = getRandomElements(2);
+        let props = { 4: { key: 'ie', title: 'ค่าพลังงานไอออไนเซชัน (IE)' },
+                      5: { key: 'en', title: 'ค่าอิเล็กโตรเนกาติวิตี (EN)' },
+                      6: { key: 'mp', title: 'จุดหลอมเหลว (Melting Point)' },
+                      7: { key: 'ea', title: 'ค่าสัมพรรคภาพอิเล็กตรอน (EA)' } };
+        let currentProp = props[currentMode];
+        
+        area.innerHTML = `
+          <h2>โหมดที่ ${currentMode}: เปรียบเทียบ ${currentProp.title}</h2>
+          <p>ธาตุใดมีค่า <strong>${currentProp.title} มากกว่ากัน?</strong></p>
+          <div class="compare-box">
+            <div class="element-card" onclick="checkCompare(${pair[0][currentProp.key]}, ${pair[1][currentProp.key]})">
+              <div class="symbol">${pair[0].sym}</div>
+              <div>${pair[0].name}</div>
+            </div>
+            <div class="element-card" onclick="checkCompare(${pair[1][currentProp.key]}, ${pair[0][currentProp.key]})">
+              <div class="symbol">${pair[1].sym}</div>
+              <div>${pair[1].name}</div>
+            </div>
+          </div>
+          <div class="msg" id="msg"></div>
+        `;
+      }
+    }
 
-            switch(currentMode) {
-                case 1: renderMode1(container); break;
-                case 2: renderMode2(container); break;
-                case 3: renderMode3(container); break;
-                case 4: renderCompareMode(container, 'ie', 'พลังงานไอออไนเซชัน (IE)'); break;
-                case 5: renderCompareMode(container, 'en', 'สภาพไฟฟ้าลบ (EN)'); break;
-                case 6: renderCompareMode(container, 'mp', 'จุดหลอมเหลว (Melting Point)'); break;
-                case 7: renderCompareMode(container, 'ea', 'สัมพรรคภาพอิเล็กตรอน (EA)'); break;
-            }
-        }
+    // Handlers for Mode 1
+    function selectCard(el, z) {
+      document.querySelectorAll('.drag-item').forEach(card => card.classList.remove('selected'));
+      selectedElement = z;
+      el.classList.add('selected');
+      showMsg(`เลือกธาตุ Z:${z} แล้ว - ให้แตะช่องในตารางเพื่อวาง`);
+    }
 
-        // --- MODE 1: Table Placement ---
-        function renderMode1(container) {
-            container.innerHTML = `<div class="question-title">โหมดที่ 1: เลือกธาตุจากกล่อง แล้วแตะที่ตำแหน่งบนตารางธาตุให้ถูกต้อง</div>`;
-            
-            const ptable = document.createElement('div');
-            ptable.className = 'ptable-container';
-            const grid = document.createElement('div');
-            grid.className = 'ptable-grid';
+    function placeSlot(targetZ) {
+      if (!selectedElement) return;
+      if (selectedElement === targetZ) {
+        showMsg("ถูกต้อง! วางธาตุเรียบร้อย", 'var(--accent)');
+        let slot = document.querySelector(`.slot[data-z="${targetZ}"]`);
+        let elData = elementsData.find(e => e.z === targetZ);
+        slot.classList.add('filled');
+        slot.innerText = elData.sym;
+        selectedElement = null;
+        setTimeout(renderGame, 1000);
+      } else {
+        wrongAnswer(`ผิดตำแหน่ง! นั่นไม่ใช่ช่องของ Z:${selectedElement}`);
+      }
+    }
 
-            // Render a mini-board matching Period/Group
-            for(let r = 1; r <= 7; r++) {
-                for(let c = 1; c <= 18; c++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'ptable-cell';
-                    const targetElem = elementsData.find(e => e.period === r && e.group === c);
-                    
-                    if (targetElem) {
-                        cell.dataset.num = targetElem.num;
-                        cell.innerText = cell.classList.contains('filled') ? targetElem.symbol : '';
-                        cell.onclick = () => {
-                            if (selectedElemForPlace) {
-                                if (selectedElemForPlace.num === targetElem.num) {
-                                    cell.classList.add('filled');
-                                    cell.innerText = targetElem.symbol;
-                                    selectedElemForPlace = null;
-                                    handleCorrectAnswer();
-                                } else {
-                                    handleWrongAnswer();
-                                }
-                            }
-                        };
-                    } else {
-                        cell.style.border = 'none';
-                    }
-                    grid.appendChild(cell);
-                }
-            }
-            ptable.appendChild(grid);
-            container.appendChild(ptable);
+    function drag(ev, z) { ev.dataTransfer.setData("text", z); }
 
-            // Bank of Elements to Place
-            const bank = document.createElement('div');
-            bank.className = 'draggable-bank';
-            const randomList = [...elementsData].sort(() => 0.5 - Math.random()).slice(0, 5);
-            
-            randomList.forEach(e => {
-                const card = document.createElement('div');
-                card.className = 'opt-card';
-                card.innerHTML = `<div class="opt-symbol">${e.symbol}</div>`;
-                card.onclick = () => {
-                    document.querySelectorAll('.draggable-bank .opt-card').forEach(c => c.style.borderColor = '#475569');
-                    card.style.borderColor = 'var(--accent)';
-                    selectedElemForPlace = e;
-                };
-                bank.appendChild(card);
-            });
-            container.appendChild(bank);
-        }
+    // Handlers for Mode 2 & 3
+    function checkE(correct) {
+      let val = document.getElementById('eInput').value.trim();
+      if (val === correct) {
+        showMsg("ถูกต้องแม่นยำ!", 'var(--accent)');
+        setTimeout(renderGame, 1200);
+      } else {
+        wrongAnswer(`ผิด! คำตอบที่ถูกต้องคือ ${correct}`);
+      }
+    }
 
-        // --- MODE 2: Electron Configuration ---
-        function renderMode2(container) {
-            const randomElem = elementsData[Math.floor(Math.random() * elementsData.length)];
-            container.innerHTML = `
-                <div class="question-title">โหมดที่ 2: การจัดเรียงอิเล็กตรอนของธาตุ <strong>${randomElem.name} (${randomElem.symbol})</strong> (Z = ${randomElem.num}) คืออะไร?</div>
-                <input type="text" id="e-input" placeholder="เช่น 2, 8, 1 หรือ 1s2 2s1" autocomplete="off" />
-                <button class="submit-btn" onclick="checkConfig('${randomElem.e_config}')">ส่งคำตอบ</button>
-            `;
-        }
+    function checkName(correct) {
+      let val = document.getElementById('nameInput').value.trim().toLowerCase();
+      if (val === correct.toLowerCase()) {
+        showMsg("ถูกต้อง!", 'var(--accent)');
+        setTimeout(renderGame, 1200);
+      } else {
+        wrongAnswer(`ตอบผิด! ชื่อที่ถูกต้องคือ ${correct}`);
+      }
+    }
 
-        function checkConfig(correctConfig) {
-            const input = document.getElementById('e-input').value.trim();
-            if (input.replace(/\s+/g, '') === correctConfig.replace(/\s+/g, '')) {
-                handleCorrectAnswer();
-            } else {
-                handleWrongAnswer();
-            }
-        }
+    // Handler for Modes 4-7
+    function checkCompare(val1, val2) {
+      if (val1 >= val2) {
+        showMsg("ถูกต้อง! คุณเลือกธาตุที่มีค่าสูงกว่า", 'var(--accent)');
+        setTimeout(renderGame, 1200);
+      } else {
+        wrongAnswer("ผิด! ธาตุนี้มีค่าน้อยกว่า");
+      }
+    }
 
-        // --- MODE 3: Element Clues ---
-        function renderMode3(container) {
-            const randomElem = elementsData[Math.floor(Math.random() * elementsData.length)];
-            container.innerHTML = `
-                <div class="question-title">โหมดที่ 3: คำใบ้ทายธาตุ</div>
-                <p style="margin-bottom:20px; font-size:1.1rem; color:var(--accent);">"${randomElem.hint}"</p>
-                <input type="text" id="name-input" placeholder="พิมพ์ชื่อธาตุหรือสัญลักษณ์ภาษาอังกฤษ" autocomplete="off" />
-                <button class="submit-btn" onclick="checkName('${randomElem.name}', '${randomElem.symbol}')">ส่งคำตอบ</button>
-            `;
-        }
-
-        function checkName(correctName, correctSymbol) {
-            const input = document.getElementById('name-input').value.trim().toLowerCase();
-            if (input === correctName.toLowerCase() || input === correctSymbol.toLowerCase()) {
-                handleCorrectAnswer();
-            } else {
-                handleWrongAnswer();
-            }
-        }
-
-        // --- MODE 4, 5, 6, 7: Properties Comparison ---
-        function renderCompareMode(container, propertyKey, propertyLabel) {
-            // Pick 2 random elements
-            let elemA = elementsData[Math.floor(Math.random() * elementsData.length)];
-            let elemB = elementsData[Math.floor(Math.random() * elementsData.length)];
-            while (elemA.num === elemB.num) {
-                elemB = elementsData[Math.floor(Math.random() * elementsData.length)];
-            }
-
-            const isGreaterTarget = Math.random() > 0.5;
-            const targetText = isGreaterTarget ? "มากที่สุด (มากกว่า)" : "น้อยที่สุด (น้อยกว่า)";
-
-            container.innerHTML = `
-                <div class="question-title">โหมดเปรียบเทียบ: ธาตุใดมีค่า <strong>${propertyLabel}</strong> ${targetText}?</div>
-                <div class="option-grid">
-                    <div class="opt-card" onclick="checkCompare(${elemA[propertyKey]}, ${elemB[propertyKey]}, true, ${isGreaterTarget})">
-                        <div class="opt-symbol">${elemA.symbol}</div>
-                        <div class="opt-name">${elemA.name}</div>
-                    </div>
-                    <div class="opt-card" onclick="checkCompare(${elemA[propertyKey]}, ${elemB[propertyKey]}, false, ${isGreaterTarget})">
-                        <div class="opt-symbol">${elemB.symbol}</div>
-                        <div class="opt-name">${elemB.name}</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function checkCompare(valA, valB, choseA, isGreaterTarget) {
-            const aIsGreater = valA > valB;
-            const correctChoiceIsA = isGreaterTarget ? aIsGreater : !aIsGreater;
-
-            if ((choseA && correctChoiceIsA) || (!choseA && !correctChoiceIsA)) {
-                handleCorrectAnswer();
-            } else {
-                handleWrongAnswer();
-            }
-        }
-
-        // --- GAME OVER SCREEN ---
-        function renderGameOver() {
-            const container = document.getElementById('game-container');
-            container.innerHTML = `
-                <div class="overlay">
-                    <h2 style="font-size: 2rem; color: var(--danger); margin-bottom: 10px;">GAME OVER</h2>
-                    <p style="margin-bottom: 20px;">หัวใจของคุณหมดแล้ว! คะแนนรวม: <strong>${score}</strong></p>
-                    <button class="submit-btn" onclick="restartGame()">เล่นใหม่อีกครั้ง</button>
-                </div>
-            `;
-        }
-
-        function restartGame() {
-            hearts = 5;
-            score = 0;
-            updateUI();
-            renderGame();
-        }
-
-        // Initialize Game
-        updateUI();
-        renderGame();
-    </script>
+    // Init
+    renderGame();
+  </script>
 </body>
 </html>
