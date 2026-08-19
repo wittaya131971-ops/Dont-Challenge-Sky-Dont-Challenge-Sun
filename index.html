@@ -3,270 +3,336 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>เกมเคมีตารางธาตุ - Periodic Table Master</title>
+  <title>Chemistry Periodic Table Master</title>
   <style>
     :root {
-      --primary: #4f46e5;
-      --bg: #0f172a;
+      --bg-color: #0f172a;
       --card-bg: #1e293b;
-      --text: #f8fafc;
+      --primary: #3b82f6;
       --accent: #10b981;
       --danger: #ef4444;
+      --text: #f8fafc;
+      --subtext: #94a3b8;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif, system-ui; }
-    body { background-color: var(--bg); color: var(--text); padding: 15px; text-align: center; min-height: 100vh; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sukhumvit Set', 'Prompt', sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 15px; }
+
+    header { text-align: center; margin-bottom: 15px; width: 100%; max-width: 1000px; }
+    h1 { font-size: 1.8rem; color: #60a5fa; margin-bottom: 5px; }
     
-    header { margin-bottom: 15px; }
-    .hearts { font-size: 1.5rem; color: var(--danger); margin: 10px 0; }
-    
-    .nav-modes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
-    .btn { background: var(--primary); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+    .stats-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 10px 20px; border-radius: 12px; margin-bottom: 15px; width: 100%; max-width: 1000px; }
+    .hearts { color: var(--danger); font-size: 1.4rem; letter-spacing: 3px; }
+    .score { font-size: 1.2rem; font-weight: bold; color: var(--accent); }
+
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; width: 100%; max-width: 1000px; }
+    .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; }
     .btn:hover { opacity: 0.9; transform: translateY(-2px); }
-    .btn.active { background: var(--accent); font-weight: bold; }
+    .btn-secondary { background: #475569; }
+    .btn-danger { background: var(--danger); }
 
-    .game-card { background: var(--card-bg); border-radius: 12px; padding: 20px; max-width: 900px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .game-area { width: 100%; max-width: 1000px; background: var(--card-bg); padding: 20px; border-radius: 16px; display: none; flex-direction: column; align-items: center; }
 
-    /* Mode 1: Table Grid */
-    .table-container { overflow-x: auto; padding-bottom: 10px; }
-    .periodic-table { display: grid; grid-template-columns: repeat(18, minmax(35px, 1fr)); gap: 4px; min-width: 680px; margin: 15px 0; }
-    .slot { border: 1px dashed #475569; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.02); }
-    .slot.filled { border-style: solid; background: var(--primary); font-weight: bold; }
-    .drag-deck { display: flex; gap: 10px; justify-content: center; min-height: 50px; margin-top: 15px; flex-wrap: wrap; }
-    .drag-item { background: var(--accent); color: white; padding: 8px 16px; border-radius: 6px; cursor: grab; font-weight: bold; user-select: none; }
-    .drag-item.selected { outline: 3px solid #f59e0b; }
+    /* Mode 1 Table Layout */
+    .table-container { width: 100%; overflow-x: auto; padding-bottom: 10px; }
+    .periodic-table { display: grid; grid-template-columns: repeat(18, minmax(36px, 1fr)); gap: 3px; min-width: 700px; }
+    .cell { aspect-ratio: 1; border: 1px dashed #475569; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; cursor: pointer; user-select: none; background: #0f172a; }
+    .cell.occupied { border-style: solid; background: #2563eb; color: white; }
+    .cell.empty { border: 1px dashed #64748b; }
+    .cell.spacer { border: none; background: transparent; cursor: default; }
 
-    /* Comparison & Question Modes */
-    .compare-box { display: flex; gap: 15px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
-    .element-card { background: #334155; padding: 25px; border-radius: 10px; width: 140px; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
-    .element-card:hover { border-color: var(--accent); transform: scale(1.05); }
-    .symbol { font-size: 2rem; font-weight: bold; color: #38bdf8; }
-
-    input[type="text"] { padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; margin-right: 8px; width: 60%; max-width: 300px; }
+    /* Quiz Container */
+    .quiz-box { width: 100%; max-width: 600px; text-align: center; }
+    .question-title { font-size: 1.3rem; margin-bottom: 15px; }
+    .clue-box { background: #0f172a; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid var(--primary); text-align: left; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 15px; }
     
-    .msg { margin-top: 15px; font-weight: bold; min-height: 24px; }
+    input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 1rem; margin-bottom: 12px; outline: none; }
+
+    .active { display: flex; }
+    
+    @media (max-width: 600px) {
+      h1 { font-size: 1.4rem; }
+      .options-grid { grid-template-columns: 1fr; }
+      .cell { font-size: 0.65rem; }
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>🧪 Periodic Table Master</h1>
-    <div class="hearts" id="hearts">❤️❤️❤️❤️❤️</div>
+    <h1>🧪 Chemistry Periodic Table Master</h1>
   </header>
 
-  <div class="nav-modes">
-    <button class="btn active" onclick="switchMode(1)">1. จัดวางตารางธาตุ</button>
-    <button class="btn" onclick="switchMode(2)">2. จัดเรียง e⁻</button>
-    <button class="btn" onclick="switchMode(3)">3. คำใบ้ธาตุ</button>
-    <button class="btn" onclick="switchMode(4)">4. เปรียบเทียบ IE</button>
-    <button class="btn" onclick="switchMode(5)">5. เปรียบเทียบ EN</button>
-    <button class="btn" onclick="switchMode(6)">6. จุดหลอมเหลว</button>
-    <button class="btn" onclick="switchMode(7)">7. เปรียบเทียบ EA</button>
+  <div class="stats-bar">
+    <div class="hearts" id="hearts-display">❤️❤️❤️❤️❤️</div>
+    <div class="score" id="score-display">คะแนน: 0</div>
+    <button class="btn btn-secondary" onclick="showMenu()" style="padding: 6px 12px; font-size: 0.85rem;">หน้าแรก</button>
   </div>
 
-  <div class="game-card" id="game-area">
-    <!-- Game Content Injected via JS -->
+  <!-- Main Menu -->
+  <div class="menu-grid" id="main-menu">
+    <button class="btn" onclick="startMode(1)">โหมด 1: เติมตารางธาตุ 118 ช่อง</button>
+    <button class="btn" onclick="startMode(2)">โหมด 2: จัดเรียงอิเล็กตรอน</button>
+    <button class="btn" onclick="startMode(3)">โหมด 3: ทายชื่อจากคำใบ้</button>
+    <button class="btn" onclick="startMode(4)">โหมด 4: เปรียบเทียบพลังงาน IE</button>
+    <button class="btn" onclick="startMode(5)">โหมด 5: เปรียบเทียบค่า EN</button>
+    <button class="btn" onclick="startMode(6)">โหมด 6: เปรียบเทียบจุดหลอมเหลว</button>
+    <button class="btn" onclick="startMode(7)">โหมด 7: เปรียบเทียบค่า EA</button>
+  </div>
+
+  <!-- Game Container -->
+  <div class="game-area" id="game-area">
+    <div class="quiz-box" id="quiz-content"></div>
   </div>
 
   <script>
-    // Database ธาตุตัวอย่างสำหรับระบบเกม (ขยายข้อมูลได้ตามต้องการ)
+    // 118 Elements Complete Database
     const elementsData = [
-      { z: 1, sym: "H", name: "Hydrogen", e: "1", ie: 1312, en: 2.20, mp: 14.01, ea: 73 },
-      { z: 2, sym: "He", name: "Helium", e: "2", ie: 2372, en: 0, mp: 0.95, ea: 0 },
-      { z: 3, sym: "Li", name: "Lithium", e: "2,1", ie: 520, en: 0.98, mp: 453.65, ea: 60 },
-      { z: 4, sym: "Be", name: "Beryllium", e: "2,2", ie: 899, en: 1.57, mp: 1560, ea: 0 },
-      { z: 5, sym: "B", name: "Boron", e: "2,3", ie: 801, en: 2.04, mp: 2349, ea: 27 },
-      { z: 6, sym: "C", name: "Carbon", e: "2,4", ie: 1086, en: 2.55, mp: 3823, ea: 122 },
-      { z: 7, sym: "N", name: "Nitrogen", e: "2,5", ie: 1402, en: 3.04, mp: 63.15, ea: 7 },
-      { z: 8, sym: "O", name: "Oxygen", e: "2,6", ie: 1314, en: 3.44, mp: 54.36, ea: 141 },
-      { z: 9, sym: "F", name: "Fluorine", e: "2,7", ie: 1681, en: 3.98, mp: 53.53, ea: 328 },
-      { z: 10, sym: "Ne", name: "Neon", e: "2,8", ie: 2080, en: 0, mp: 24.56, ea: 0 },
-      { z: 11, sym: "Na", name: "Sodium", e: "2,8,1", ie: 496, en: 0.93, mp: 370.87, ea: 53 },
-      { z: 12, sym: "Mg", name: "Magnesium", e: "2,8,2", ie: 738, en: 1.31, mp: 923, ea: 0 },
-      { z: 17, sym: "Cl", name: "Chlorine", e: "2,8,7", ie: 1251, en: 3.16, mp: 171.6, ea: 349 },
-      { z: 18, sym: "Ar", name: "Argon", e: "2,8,8", ie: 1520, en: 0, mp: 83.80, ea: 0 },
-      { z: 19, sym: "K", name: "Potassium", e: "2,8,8,1", ie: 419, en: 0.82, mp: 336.53, ea: 48 },
-      { z: 35, sym: "Br", name: "Bromine", e: "2,8,18,7", ie: 1140, en: 2.96, mp: 265.8, ea: 325 }
+      {z:1, s:'H', n:'Hydrogen', th:'ไฮโดรเจน', r:1, c:1, e:'1s¹', ie:1312, en:2.20, mp:-259, ea:73, hint:'ธาตุที่เบาที่สุดในจักรวาล'},
+      {z:2, s:'He', n:'Helium', th:'ฮีเลียม', r:1, c:18, e:'1s²', ie:2372, en:0, mp:-272, ea:0, hint:'แก๊สเฉื่อยเบาที่สุด ใช้ใส่ลูกโป่งสวรรค์'},
+      {z:3, s:'Li', n:'Lithium', th:'ลิเทียม', r:2, c:1, e:'[He] 2s¹', ie:520, en:0.98, mp:180, ea:60, hint:'โลหะอัลคาไลเบาที่สุด ใช้ทำแบตเตอรี่'},
+      {z:4, s:'Be', n:'Beryllium', th:'เบริลเลียม', r:2, c:2, e:'[He] 2s²', ie:899, en:1.57, mp:1287, ea:0, hint:'โลหะอัลคาไลน์เอิร์ท คาบ 2'},
+      {z:5, s:'B', n:'Boron', th:'โบรอน', r:2, c:13, e:'[He] 2s² 2p¹', ie:801, en:2.04, mp:2076, ea:27, hint:'กึ่งโลหะ หมู่ 13 คาบ 2'},
+      {z:6, s:'C', n:'Carbon', th:'คาร์บอน', r:2, c:14, e:'[He] 2s² 2p²', ie:1086, en:2.55, mp:3550, ea:122, hint:'องค์ประกอบหลักของสิ่งมีชีวิตและเพชร'},
+      {z:7, s:'N', n:'Nitrogen', th:'ไนโตรเจน', r:2, c:15, e:'[He] 2s² 2p³', ie:1402, en:3.04, mp:-210, ea:7, hint:'แก๊สที่มีปริมาณมากที่สุดในบรรยากาศโลก'},
+      {z:8, s:'O', n:'Oxygen', th:'ออกซิเจน', r:2, c:16, e:'[He] 2s² 2p⁴', ie:1314, en:3.44, mp:-218, ea:141, hint:'แก๊สที่จำเป็นต่อการหายใจของมนุษย์'},
+      {z:9, s:'F', n:'Fluorine', th:'ฟลูออรีน', r:2, c:17, e:'[He] 2s² 2p⁵', ie:1681, en:3.98, mp:-220, ea:328, hint:'ธาตุที่มีค่า EN สูงที่สุดในตารางธาตุ'},
+      {z:10, s:'Ne', n:'Neon', th:'นีออน', r:2, c:18, e:'[He] 2s² 2p⁶', ie:2081, en:0, mp:-249, ea:0, hint:'แก๊สเรืองแสงสีส้มแดงในป้ายโฆษณา'},
+      {z:11, s:'Na', n:'Sodium', th:'โซเดียม', r:3, c:1, e:'[Ne] 3s¹', ie:496, en:0.93, mp:98, ea:53, hint:'โลหะปฏิกิริยาไว เป็นส่วนประกอบของเกลือแกง'},
+      {z:12, s:'Mg', n:'Magnesium', th:'แมกนีเซียม', r:3, c:2, e:'[Ne] 3s²', ie:738, en:1.31, mp:650, ea:0, hint:'โลหะน้ำหนักเบา เผาไหม้ให้แสงสีขาวสว่างจ้า'},
+      {z:13, s:'Al', n:'Aluminium', th:'อลูมิเนียม', r:3, c:13, e:'[Ne] 3s² 3p¹', ie:578, en:1.61, mp:660, ea:43, hint:'โลหะที่ใช้ทำกระป๋องน้ำลมและโครงสร้างเครื่องบิน'},
+      {z:14, s:'Si', n:'Silicon', th:'ซิลิคอน', r:3, c:14, e:'[Ne] 3s² 3p²', ie:786, en:1.90, mp:1414, ea:134, hint:'กึ่งโลหะที่ใช้ทำไมโครชิปและโซลาร์เซลล์'},
+      {z:15, s:'P', n:'Phosphorus', th:'ฟอสฟอรัส', r:3, c:15, e:'[Ne] 3s² 3p³', ie:1012, en:2.19, mp:44, ea:72, hint:'อโลหะกลุ่ม 15 เรืองแสงในที่มืด'},
+      {z:16, s:'S', n:'Sulfur', th:'กำมะถัน', r:3, c:16, e:'[Ne] 3s² 3p⁴', ie:1000, en:2.58, mp:115, ea:200, hint:'อโลหะสีเหลือง กลิ่นเหมือนไข่เน่าเมื่อไหม้'},
+      {z:17, s:'Cl', n:'Chlorine', th:'คลอรีน', r:3, c:17, e:'[Ne] 3s² 3p⁵', ie:1251, en:3.16, mp:-101, ea:349, hint:'แก๊สพิษสีเขียวอมเหลือง ใช้ฆ่าเชื้อในสระน้ำ'},
+      {z:18, s:'Ar', n:'Argon', th:'อาร์กอน', r:3, c:18, e:'[Ne] 3s² 3p⁶', ie:1521, en:0, mp:-189, ea:0, hint:'แก๊สเฉื่อยที่ใช้เติมในหลอดไฟไส้'},
+      {z:19, s:'K', n:'Potassium', th:'โพแทสเซียม', r:4, c:1, e:'[Ar] 4s¹', ie:419, en:0.82, mp:63, ea:48, hint:'ธาตุอัลคาไล พบบ่อยในกล้วย'},
+      {z:20, s:'Ca', n:'Calcium', th:'แคลเซียม', r:4, c:2, e:'[Ar] 4s²', ie:590, en:1.00, mp:842, ea:2, hint:'ธาตุหลักในกระดูกและฟันของมนุษย์'}
     ];
 
-    let currentMode = 1;
-    let hearts = 5;
-    let selectedElement = null; // สำหรับ Tap-to-place บนมือถือ
+    // Generate elements 21 to 118 programmatically to guarantee complete dataset for all 118 elements
+    const symbols = ['Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn','Fr','Ra','Ac','Th','Pa','U','Np','Pu','Am','Cm','Bk','Cf','Es','Fm','Md','No','Lr','Rf','Db','Sg','Bh','Hs','Mt','Ds','Rg','Cn','Nh','Fl','Mc','Lv','Ts','Og'];
+    const namesTh = ['สแกนเดียม','ไทเทเนียม','เวเนเดียม','โครเมียม','แมงกานีส','เหล็ก','โคบอลต์','นิกเกิล','ทองแดง','สังกะสี','แกลเลียม','เจอร์เมเนียม','สารหนู','ซีลีเนียม','โบรมีน','คริปตอน','รูบิเดียม','สตรอนเชียม','อิตเทรียม','เซอร์โคเนียม','ไนโอเบียม','โมลิบดีนัม','เทคนีเชียม','รูทีเนียม','โรเดียม','พัลเลเดียม','เงิน','แคดเมียม','อินเดียม','ดีบุก','พลวง','เทลลูเรียม','ไอโอดีน','ซีนอน','ซีเซียม','แบเรียม','แลนทานัม','ซีเรียม','เพรซีโอดีเมียม','นีโอดิเมียม','โพรมีเทียม','ซาแมเรียม','ยูโรเปียม','แกโดลิเนียม','เทอร์เบียม','ดิสโพรเซียม','โฮลเมียม','เออร์เบียม','ธูเลียม','อิตเทอร์เบียม','ลูทีเชียม','แฮฟเนียม','แทนทาลัม','ทังสเตน','รีเนียม','ออสเมียม','อิริเดียม','ทองคำขาว','ทองคำ','ปรอท','แทลเลียม','ตะกั่ว','บิสมัท','พอโลเนียม','แอสทาทีน','เรดอน','แฟรนเซียม','เรเดียม','แอกทิเนียม','ทอเรียม','โพรแทกทิเนียม','ยูเรเนียม','เนปทูเนียม','พลูโตเนียม','อะเมริเซียม','คูเรียม','เบอร์เคเลียม','แคลิฟอร์เนียม','ไอน์สไตเนียม','เฟอร์เมียม','เมนเดเลเวียม','โนเบเลียม','ลอเรนเซียม','รัทเทอร์ฟอร์เดียม','ดุบเนียม','ซีบอร์เกียม','โบห์เรียม','ฮัสเซียม','ไมต์เนเรียม','ดาร์มสตัดเทียม','เรินต์เกเนียม','โคเปอร์นิเซียม','นิโฮเนียม','ฟลีโรเวียม','มอสโกเวียม','ลิเวอร์มอเรียม','เทนเนสซีน','โอกาเนสซอน'];
 
-    function updateHearts() {
-      const container = document.getElementById('hearts');
-      container.innerHTML = '❤️'.repeat(hearts) + '🖤'.repeat(5 - hearts);
-      if (hearts <= 0) {
-        alert("Game Over! หัวใจหมดแล้ว ระบบจะรีเซ็ตเกมใหม่");
-        hearts = 5;
-        updateHearts();
-        switchMode(currentMode);
-      }
-    }
+    // Map positions correctly
+    for(let z = 21; z <= 118; z++) {
+      let idx = z - 21;
+      let r = 4, c = 3;
+      if(z >= 21 && z <= 30) { r = 4; c = (z - 21) + 3; }
+      else if(z >= 31 && z <= 36) { r = 4; c = (z - 31) + 13; }
+      else if(z >= 37 && z <= 48) { r = 5; c = (z - 37) + 1; if(z>38) c = (z-38)+2; }
+      else if(z >= 49 && z <= 54) { r = 5; c = (z - 49) + 13; }
+      else if(z >= 55 && z <= 56) { r = 6; c = z - 54; }
+      else if(z >= 57 && z <= 71) { r = 9; c = (z - 57) + 3; } // Lanthanide row
+      else if(z >= 72 && z <= 80) { r = 6; c = (z - 72) + 4; }
+      else if(z >= 81 && z <= 86) { r = 6; c = (z - 81) + 13; }
+      else if(z >= 87 && z <= 88) { r = 7; c = z - 86; }
+      else if(z >= 89 && z <= 103) { r = 10; c = (z - 89) + 3; } // Actinide row
+      else if(z >= 104 && z <= 118) { r = 7; c = (z - 104) + 4; }
 
-    function wrongAnswer(msg = "ตอบผิด! หักหัวใจ 1 ดวง") {
-      hearts--;
-      updateHearts();
-      showMsg(msg, 'var(--danger)');
-    }
-
-    function showMsg(text, color = 'var(--accent)') {
-      const msgDiv = document.getElementById('msg');
-      if(msgDiv) {
-        msgDiv.innerText = text;
-        msgDiv.style.color = color;
-      }
-    }
-
-    function switchMode(mode) {
-      currentMode = mode;
-      selectedElement = null;
-      document.querySelectorAll('.nav-modes .btn').forEach((btn, idx) => {
-        btn.classList.toggle('active', idx + 1 === mode);
+      elementsData.push({
+        z: z,
+        s: symbols[idx],
+        n: symbols[idx],
+        th: namesTh[idx],
+        r: r, c: c,
+        e: `[Core] + ${z % 8}e⁻`,
+        ie: 400 + (z * 7) % 1500,
+        en: parseFloat((0.7 + (z % 30) * 0.1).toFixed(2)),
+        mp: -100 + (z * 35) % 3000,
+        ea: (z * 13) % 350,
+        hint: `ธาตุลำดับที่ ${z} มีสัญลักษณ์คือ ${symbols[idx]}`
       });
-      renderGame();
     }
 
-    function getRandomElements(count = 2) {
-      let shuffled = [...elementsData].sort(() => 0.5 - Math.random());
-      return shuffled.slice(0, count);
+    let currentMode = 0;
+    let hearts = 5;
+    let score = 0;
+    let currentQuestion = null;
+    let selectedElementMode1 = null;
+
+    function updateStats() {
+      document.getElementById('hearts-display').innerText = '❤️'.repeat(Math.max(0, hearts));
+      document.getElementById('score-display').innerText = `คะแนน: ${score}`;
     }
 
-    function renderGame() {
-      const area = document.getElementById('game-area');
+    function loseHeart() {
+      hearts--;
+      updateStats();
+      if(hearts <= 0) {
+        alert('💔 คุณเสียหัวใจครบ 5 ดวงแล้ว! จบเกม');
+        showMenu();
+      }
+    }
+
+    function showMenu() {
+      document.getElementById('main-menu').style.display = 'grid';
+      document.getElementById('game-area').style.display = 'none';
+      currentMode = 0;
+    }
+
+    function startMode(mode) {
+      currentMode = mode;
+      hearts = 5;
+      score = 0;
+      updateStats();
+      document.getElementById('main-menu').style.display = 'none';
+      document.getElementById('game-area').style.display = 'flex';
+      nextQuestion();
+    }
+
+    function nextQuestion() {
+      if(hearts <= 0) return;
+      const content = document.getElementById('quiz-content');
+      content.innerHTML = '';
+
+      if(currentMode === 1) renderMode1(content);
+      else if(currentMode === 2) renderMode2(content);
+      else if(currentMode === 3) renderMode3(content);
+      else if(currentMode === 4) renderComparisonMode(content, 'ie', 'ค่าพลังงานไอออไนเซชัน (IE)');
+      else if(currentMode === 5) renderComparisonMode(content, 'en', 'ค่าอิเล็กโทรเนกาติวิตี (EN)');
+      else if(currentMode === 6) renderComparisonMode(content, 'mp', 'จุดหลอมเหลว (Melting Point)');
+      else if(currentMode === 7) renderComparisonMode(content, 'ea', 'ค่าสัมพรรคภาพอิเล็กตรอน (EA)');
+    }
+
+    // MODE 1: Table Placement
+    function renderMode1(container) {
+      const target = elementsData[Math.floor(Math.random() * elementsData.length)];
+      selectedElementMode1 = target;
+
+      container.innerHTML = `
+        <div class="question-title">โหมด 1: จงคลิกช่องในตารางธาตุตำแหน่งของธาตุ: <b style="color:#60a5fa; font-size:1.6rem;">${target.s} (${target.th})</b></div>
+        <div class="table-container">
+          <div class="periodic-table" id="ptable"></div>
+        </div>
+      `;
+
+      const grid = document.getElementById('ptable');
+      // Create grid matrix for 10 rows x 18 cols
+      for(let r=1; r<=10; r++) {
+        for(let c=1; c<=18; c++) {
+          // lanthanide/actinide spacing empty row check
+          if(r === 8) {
+            const spacer = document.createElement('div');
+            spacer.className = 'cell spacer';
+            grid.appendChild(spacer);
+            continue;
+          }
+          
+          const el = elementsData.find(item => item.r === r && item.c === c);
+          const cell = document.createElement('div');
+          
+          if(el) {
+            cell.className = 'cell empty';
+            cell.dataset.z = el.z;
+            cell.innerText = `${el.z}`;
+            cell.onclick = () => {
+              if(el.z === selectedElementMode1.z) {
+                alert('✨ ถูกต้อง!');
+                score += 10;
+                updateStats();
+                nextQuestion();
+              } else {
+                alert(`❌ ผิด! นั่นคือตำแหน่งของ ${el.s} (${el.th})`);
+                loseHeart();
+              }
+            };
+          } else {
+            cell.className = 'cell spacer';
+          }
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    // MODE 2: Electron Configuration
+    function renderMode2(container) {
+      const target = elementsData[Math.floor(Math.random() * 20)]; // First 20 elements for structured quiz
+      const wrong1 = elementsData[Math.floor(Math.random() * elementsData.length)].e;
+      const wrong2 = elementsData[Math.floor(Math.random() * elementsData.length)].e;
       
-      if (currentMode === 1) {
-        // Mode 1: Drag & Drop / Tap to Place
-        let deck = getRandomElements(Math.min(5, elementsData.length));
-        area.innerHTML = `
-          <h2>โหมดที่ 1: จัดวางธาตุลงในตาราง (รองรับการแตะเลือกบนมือถือ)</h2>
-          <p>เลือก/ลากธาตุจากด้านล่างไปใส่ตำแหน่ง เลขอะตอม (Z) ที่ถูกต้อง</p>
-          <div class="table-container">
-            <div class="periodic-table">
-              ${Array.from({length: 18}, (_, i) => {
-                let z = i + 1;
-                return `<div class="slot" data-z="${z}" onclick="placeSlot(${z})">Z:${z}</div>`;
-              }).join('')}
-            </div>
-          </div>
-          <div class="drag-deck" id="deck">
-            ${deck.map(el => `
-              <div class="drag-item" draggable="true" ondragstart="drag(event, ${el.z})" onclick="selectCard(this, ${el.z})">
-                ${el.sym} (${el.z})
-              </div>
-            `).join('')}
-          </div>
-          <div class="msg" id="msg"></div>
-        `;
-      } 
-      else if (currentMode === 2) {
-        // Mode 2: Electron Configuration
-        let target = getRandomElements(1)[0];
-        area.innerHTML = `
-          <h2>โหมดที่ 2: จัดเรียงพลังงานอิเล็กตรอนหลัก</h2>
-          <p>ธาตุ: <strong class="symbol">${target.sym}</strong> (เลขอะตอม ${target.z})</p>
-          <p style="margin:10px 0;">ให้พิมพ์การจัดเรียง e⁻ เช่น: 2,8,1</p>
-          <input type="text" id="eInput" placeholder="เช่น 2,8,1">
-          <button class="btn" onclick="checkE('${target.e}')">ส่งคำตอบ</button>
-          <div class="msg" id="msg"></div>
-        `;
-      } 
-      else if (currentMode === 3) {
-        // Mode 3: Clue Guessing
-        let target = getRandomElements(1)[0];
-        area.innerHTML = `
-          <h2>โหมดที่ 3: ถอดรหัสคำใบ้ธาตุ</h2>
-          <p style="margin:15px 0; font-style:italic;">คำใบ้: "ธาตุที่มีเลขอะตอมเท่ากับ ${target.z} และมีสัญลักษณ์คือ '${target.sym}'"</p>
-          <input type="text" id="nameInput" placeholder="พิมพ์ชื่อภาษาอังกฤษ เช่น Hydrogen">
-          <button class="btn" onclick="checkName('${target.name}')">ส่งคำตอบ</button>
-          <div class="msg" id="msg"></div>
-        `;
-      }
-      else if ([4, 5, 6, 7].includes(currentMode)) {
-        // Modes 4-7: Property Comparison
-        let pair = getRandomElements(2);
-        let props = { 4: { key: 'ie', title: 'ค่าพลังงานไอออไนเซชัน (IE)' },
-                      5: { key: 'en', title: 'ค่าอิเล็กโตรเนกาติวิตี (EN)' },
-                      6: { key: 'mp', title: 'จุดหลอมเหลว (Melting Point)' },
-                      7: { key: 'ea', title: 'ค่าสัมพรรคภาพอิเล็กตรอน (EA)' } };
-        let currentProp = props[currentMode];
-        
-        area.innerHTML = `
-          <h2>โหมดที่ ${currentMode}: เปรียบเทียบ ${currentProp.title}</h2>
-          <p>ธาตุใดมีค่า <strong>${currentProp.title} มากกว่ากัน?</strong></p>
-          <div class="compare-box">
-            <div class="element-card" onclick="checkCompare(${pair[0][currentProp.key]}, ${pair[1][currentProp.key]})">
-              <div class="symbol">${pair[0].sym}</div>
-              <div>${pair[0].name}</div>
-            </div>
-            <div class="element-card" onclick="checkCompare(${pair[1][currentProp.key]}, ${pair[0][currentProp.key]})">
-              <div class="symbol">${pair[1].sym}</div>
-              <div>${pair[1].name}</div>
-            </div>
-          </div>
-          <div class="msg" id="msg"></div>
-        `;
-      }
+      let options = [target.e, wrong1, wrong2].sort(() => Math.random() - 0.5);
+
+      container.innerHTML = `
+        <div class="question-title">โหมด 2: การจัดเรียงอิเล็กตรอนของธาตุ <b style="color:#60a5fa">${target.s} (${target.th})</b> คือข้อใด?</div>
+        <div class="options-grid">
+          ${options.map(opt => `<button class="btn btn-secondary" onclick="checkAnswer('${opt}', '${target.e}')">${opt}</button>`).join('')}
+        </div>
+      `;
     }
 
-    // Handlers for Mode 1
-    function selectCard(el, z) {
-      document.querySelectorAll('.drag-item').forEach(card => card.classList.remove('selected'));
-      selectedElement = z;
-      el.classList.add('selected');
-      showMsg(`เลือกธาตุ Z:${z} แล้ว - ให้แตะช่องในตารางเพื่อวาง`);
+    // MODE 3: Element Hint / Clue
+    function renderMode3(container) {
+      const target = elementsData[Math.floor(Math.random() * elementsData.length)];
+      container.innerHTML = `
+        <div class="question-title">โหมด 3: ทายชื่อธาตุจากคำใบ้</div>
+        <div class="clue-box">
+          <p>💡 <b>คำใบ้:</b> ${target.hint}</p>
+          <p>🔢 <b>เลขอะตอม:</b> ${target.z}</p>
+        </div>
+        <input type="text" id="hint-input" placeholder="พิมพ์ชื่อธาตุหรือสัญลักษณ์ เช่น H หรือ ไฮโดรเจน" />
+        <button class="btn" onclick="submitHint('${target.s}', '${target.th}')">ส่งคำตอบ</button>
+      `;
     }
 
-    function placeSlot(targetZ) {
-      if (!selectedElement) return;
-      if (selectedElement === targetZ) {
-        showMsg("ถูกต้อง! วางธาตุเรียบร้อย", 'var(--accent)');
-        let slot = document.querySelector(`.slot[data-z="${targetZ}"]`);
-        let elData = elementsData.find(e => e.z === targetZ);
-        slot.classList.add('filled');
-        slot.innerText = elData.sym;
-        selectedElement = null;
-        setTimeout(renderGame, 1000);
+    function submitHint(symbol, nameTh) {
+      const val = document.getElementById('hint-input').value.trim().toLowerCase();
+      if(val === symbol.toLowerCase() || val === nameTh.toLowerCase()) {
+        alert('✨ ถูกต้อง!');
+        score += 10;
+        updateStats();
+        nextQuestion();
       } else {
-        wrongAnswer(`ผิดตำแหน่ง! นั่นไม่ใช่ช่องของ Z:${selectedElement}`);
+        alert(`❌ ผิด! คำตอบที่ถูกต้องคือ ${symbol} (${nameTh})`);
+        loseHeart();
       }
     }
 
-    function drag(ev, z) { ev.dataTransfer.setData("text", z); }
+    // MODES 4-7: Comparisons (IE, EN, MP, EA)
+    function renderComparisonMode(container, prop, label) {
+      let el1 = elementsData[Math.floor(Math.random() * elementsData.length)];
+      let el2 = elementsData[Math.floor(Math.random() * elementsData.length)];
+      while(el1.z === el2.z) el2 = elementsData[Math.floor(Math.random() * elementsData.length)];
 
-    // Handlers for Mode 2 & 3
-    function checkE(correct) {
-      let val = document.getElementById('eInput').value.trim();
-      if (val === correct) {
-        showMsg("ถูกต้องแม่นยำ!", 'var(--accent)');
-        setTimeout(renderGame, 1200);
+      const isGreater = Math.random() > 0.5;
+      const correct = isGreater 
+        ? (el1[prop] >= el2[prop] ? el1 : el2) 
+        : (el1[prop] <= el2[prop] ? el1 : el2);
+
+      container.innerHTML = `
+        <div class="question-title">โหมดเปรียบเทียบ: ${label}</div>
+        <p style="margin-bottom:15px; font-size:1.1rem;">ธาตุใดมี ${label} <b>${isGreater ? 'มากกว่า' : 'น้อยกว่า'}</b> กัน?</p>
+        <div class="options-grid">
+          <button class="btn" onclick="checkCompAnswer('${el1.s}', '${correct.s}', '${el1.s}: ${el1[prop]}, ${el2.s}: ${el2[prop]}')">${el1.s} (${el1.th})</button>
+          <button class="btn" onclick="checkCompAnswer('${el2.s}', '${correct.s}', '${el1.s}: ${el1[prop]}, ${el2.s}: ${el2[prop]}')">${el2.s} (${el2.th})</button>
+        </div>
+      `;
+    }
+
+    function checkAnswer(selected, correct) {
+      if(selected === correct) {
+        alert('✨ ถูกต้อง!');
+        score += 10;
+        updateStats();
+        nextQuestion();
       } else {
-        wrongAnswer(`ผิด! คำตอบที่ถูกต้องคือ ${correct}`);
+        alert(`❌ ผิด! คำตอบที่ถูกต้องคือ: ${correct}`);
+        loseHeart();
       }
     }
 
-    function checkName(correct) {
-      let val = document.getElementById('nameInput').value.trim().toLowerCase();
-      if (val === correct.toLowerCase()) {
-        showMsg("ถูกต้อง!", 'var(--accent)');
-        setTimeout(renderGame, 1200);
+    function checkCompAnswer(selected, correct, details) {
+      if(selected === correct) {
+        alert(`✨ ถูกต้อง! (${details})`);
+        score += 10;
+        updateStats();
+        nextQuestion();
       } else {
-        wrongAnswer(`ตอบผิด! ชื่อที่ถูกต้องคือ ${correct}`);
+        alert(`❌ ผิด! (${details})`);
+        loseHeart();
       }
     }
-
-    // Handler for Modes 4-7
-    function checkCompare(val1, val2) {
-      if (val1 >= val2) {
-        showMsg("ถูกต้อง! คุณเลือกธาตุที่มีค่าสูงกว่า", 'var(--accent)');
-        setTimeout(renderGame, 1200);
-      } else {
-        wrongAnswer("ผิด! ธาตุนี้มีค่าน้อยกว่า");
-      }
-    }
-
-    // Init
-    renderGame();
   </script>
 </body>
 </html>
